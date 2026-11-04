@@ -1,117 +1,117 @@
-#ifndef __LCD_ILI9341_H
+ï»¿#ifndef __LCD_ILI9341_H
 #define __LCD_ILI9341_H
 /**==================================================================================================================
- **¡¾ÎÄ¼şÃû³Æ¡¿  bsp_LCD_ILI9341.h
- **¡¾¹¦ÄÜ²âÊÔ¡¿  2.8´çÏÔÊ¾ÆÁ
+ **ã€æ–‡ä»¶åç§°ã€‘  bsp_LCD_ILI9341.h
+ **ã€åŠŸèƒ½æµ‹è¯•ã€‘  2.8å¯¸æ˜¾ç¤ºå±
  **==================================================================================================================
- **¡¾ÊÊÓÃÆ½Ì¨¡¿  STM32F407 + KEIL5.27 + 2.8´çÏÔÊ¾ÆÁ_ILI9341
+ **ã€é€‚ç”¨å¹³å°ã€‘  STM32F407 + KEIL5.27 + 2.8å¯¸æ˜¾ç¤ºå±_ILI9341
  **
- **¡¾»® ÖØ µã¡¿  1-±¾Ê¾Àı´úÂë£¬ÊÊÅäÊĞÃæ´ó²¿·Ö2.8´çILI9341µÄ34ÕëÆÁ
- **              2_±¾Ê¾Àı´úÂë£¬°üº¬ÁËÁ½ÖÖÎÄ±¾ÏÔÊ¾·½Ê½£ºÊ¹ÓÃ×ÔĞĞ×ªÄ£µÄ×ÖÄ£Êı¾İ¡¢Ê¹ÓÃFlashÖĞµÄ×ÖÄ£Êı¾İ¡£
- **              3_Èç¹ûÊ¹ÓÃFlashÖĞµÄ×ÖÄ£Êı¾İ£¬ĞèÒªÌí¼Óbsp_W25Q128.cµ½¹¤³ÌÖĞ£¬²¢Ìí¼ÓÍ·ÎÄ¼şbsp_LCD_ILI9341.hÖÁLCDÖĞ;
+ **ã€åˆ’ é‡ ç‚¹ã€‘  1-æœ¬ç¤ºä¾‹ä»£ç ï¼Œé€‚é…å¸‚é¢å¤§éƒ¨åˆ†2.8å¯¸ILI9341çš„34é’ˆå±
+ **              2_æœ¬ç¤ºä¾‹ä»£ç ï¼ŒåŒ…å«äº†ä¸¤ç§æ–‡æœ¬æ˜¾ç¤ºæ–¹å¼ï¼šä½¿ç”¨è‡ªè¡Œè½¬æ¨¡çš„å­—æ¨¡æ•°æ®ã€ä½¿ç”¨Flashä¸­çš„å­—æ¨¡æ•°æ®ã€‚
+ **              3_å¦‚æœä½¿ç”¨Flashä¸­çš„å­—æ¨¡æ•°æ®ï¼Œéœ€è¦æ·»åŠ bsp_W25Q128.cåˆ°å·¥ç¨‹ä¸­ï¼Œå¹¶æ·»åŠ å¤´æ–‡ä»¶bsp_LCD_ILI9341.hè‡³LCDä¸­;
  **
- **¡¾¸üĞÂ¼ÇÂ¼¡¿  2024-07-15  ÓÅ»¯×ÖÄ£º¯Êı¡¢ÍêÉÆÆä×¢ÊÍ
- **              2024-01-25  ´Ó±ê×¼¿â¹¤³ÌÒÆÖ²ÖÁHAL¿â¹¤³Ì£¬Ê¹ÓÃ¼Ä´æÆ÷²Ù×÷ÊµÏÖ£¬ÒÔÊ¹ÓÃÒÆÖ²¸ü·½±ã
- **              2023-01-12  Ôö¼Ó×ÔĞĞ½¨Ä£µÄÎÄ±¾ÏÔÊ¾º¯Êı¡¢ÍêÉÆ×¢ÊÍ
- **              2022-12-30  ÍêÉÆÖĞÎÄÏÔÊ¾º¯Êı¡¢Í¼Æ¬ÏÔÊ¾º¯Êı
+ **ã€æ›´æ–°è®°å½•ã€‘  2024-07-15  ä¼˜åŒ–å­—æ¨¡å‡½æ•°ã€å®Œå–„å…¶æ³¨é‡Š
+ **              2024-01-25  ä»æ ‡å‡†åº“å·¥ç¨‹ç§»æ¤è‡³HALåº“å·¥ç¨‹ï¼Œä½¿ç”¨å¯„å­˜å™¨æ“ä½œå®ç°ï¼Œä»¥ä½¿ç”¨ç§»æ¤æ›´æ–¹ä¾¿
+ **              2023-01-12  å¢åŠ è‡ªè¡Œå»ºæ¨¡çš„æ–‡æœ¬æ˜¾ç¤ºå‡½æ•°ã€å®Œå–„æ³¨é‡Š
+ **              2022-12-30  å®Œå–„ä¸­æ–‡æ˜¾ç¤ºå‡½æ•°ã€å›¾ç‰‡æ˜¾ç¤ºå‡½æ•°
  **
- **¡¾±¸×¢ËµÃ÷¡¿  ´úÂë°æÈ¨¹éÄ§Å®¿Æ¼¼ËùÓĞ£¬ÇëÎğÉÌÓÃ£¬Ğ»Ğ»£¡
+ **ã€å¤‡æ³¨è¯´æ˜ã€‘  ä»£ç ç‰ˆæƒå½’é­”å¥³ç§‘æŠ€æ‰€æœ‰ï¼Œè¯·å‹¿å•†ç”¨ï¼Œè°¢è°¢ï¼
  **              https://demoboard.taobao.com
 ====================================================================================================================*/
-#include "bsp_W25Q128.h"                      // ÖĞÎÄ×Ö¿â
+#include "bsp_W25Q128.h"                      // ä¸­æ–‡å­—åº“
 #include "stdlib.h"
 
-#ifdef USE_HAL_DRIVER                         // HAL¿â ÅäÖÃ
+#ifdef USE_HAL_DRIVER                         // HALåº“ é…ç½®
 #include "stm32f4xx_hal.h"                   
 #endif                                       
                                              
-#ifdef USE_STDPERIPH_DRIVER                   // ±ê×¼¿â ÅäÖÃ
+#ifdef USE_STDPERIPH_DRIVER                   // æ ‡å‡†åº“ é…ç½®
 #include "stm32f4xx.h"                       
 #endif
 
 
 
 /*****************************************************************************
- ** ÒÆÖ²ÅäÖÃ
+ ** ç§»æ¤é…ç½®
  **
 ****************************************************************************/
-#ifdef USE_HAL_DRIVER                         // HAL¿â ÅäÖÃ
-#define LCD_BL_GPIO   GPIOA                   // ±³¹â¿ØÖÆÒı½Å
+#ifdef USE_HAL_DRIVER                         // HALåº“ é…ç½®
+#define LCD_BL_GPIO   GPIOA                   // èƒŒå…‰æ§åˆ¶å¼•è„š
 #define LCD_BL_PIN    GPIO_PIN_15            
 #endif                                       
                                              
-#ifdef USE_STDPERIPH_DRIVER                   // ±ê×¼¿â ÅäÖÃ
-#define LCD_BL_GPIO   GPIOA                   // ±³¹â¿ØÖÆÒı½Å
+#ifdef USE_STDPERIPH_DRIVER                   // æ ‡å‡†åº“ é…ç½®
+#define LCD_BL_GPIO   GPIOA                   // èƒŒå…‰æ§åˆ¶å¼•è„š
 #define LCD_BL_PIN    GPIO_Pin_15
 #endif
 
 
-#define LCD_WIDTH     240                     // ÆÁµÄ¿í¶ÈÏñËØµã
-#define LCD_HEIGHT    320                     // ÆÁµÄ¸ß¶ÈÏñËØµã
+#define LCD_WIDTH     240                     // å±çš„å®½åº¦åƒç´ ç‚¹
+#define LCD_HEIGHT    320                     // å±çš„é«˜åº¦åƒç´ ç‚¹
 
-//#define LCD_DIR       6                     // ËÄÖÖÏÔÊ¾·½Ïò£¬0-ÕıÊúÆÁ£¬3-µ¹ÊúÆÁ£¬5-ÕıºáÆÁ, 6-µ¹ºáÆÁ; ×¢Òâ£ºÈç¹ûÊ¹ÓÃ´¥ÃşÆÁ£¬Ã¿´Î¸ü»»·½Ïòºó£¬¶¼ĞèÒªÖØĞÂĞ£×¼
+//#define LCD_DIR       6                     // å››ç§æ˜¾ç¤ºæ–¹å‘ï¼Œ0-æ­£ç«–å±ï¼Œ3-å€’ç«–å±ï¼Œ5-æ­£æ¨ªå±, 6-å€’æ¨ªå±; æ³¨æ„ï¼šå¦‚æœä½¿ç”¨è§¦æ‘¸å±ï¼Œæ¯æ¬¡æ›´æ¢æ–¹å‘åï¼Œéƒ½éœ€è¦é‡æ–°æ ¡å‡†
 
 
 
 /*****************************************************************************
- ** È«¾Ö±äÁ¿
- ** (²»ÓÃĞŞ¸Ä)
+ ** å…¨å±€å˜é‡
+ ** (ä¸ç”¨ä¿®æ”¹)
 ****************************************************************************/
-typedef struct                                // LCDÖØÒª²ÎÊı¼¯
+typedef struct                                // LCDé‡è¦å‚æ•°é›†
 {
-    uint16_t width;                           // LCD ¿í¶È
-    uint16_t height;                          // LCD ¸ß¶È
+    uint16_t width;                           // LCD å®½åº¦
+    uint16_t height;                          // LCD é«˜åº¦
     uint16_t id;                              // LCD ID
-    uint8_t  dir;                             // ºáÆÁ»¹ÊÇÊúÆÁ¿ØÖÆ£º0£¬ÊúÆÁ£»1£¬ºáÆÁ¡£
-    uint8_t  FlagInit;                        // ³õÊ¼»¯Íê³É±êÖ¾
+    uint8_t  dir;                             // æ¨ªå±è¿˜æ˜¯ç«–å±æ§åˆ¶ï¼š0ï¼Œç«–å±ï¼›1ï¼Œæ¨ªå±ã€‚
+    uint8_t  FlagInit;                        // åˆå§‹åŒ–å®Œæˆæ ‡å¿—
 } xLCD_TypeDef;
-extern xLCD_TypeDef xLCD;                     // ¹ÜÀíLCDÖØÒª²ÎÊı
+extern xLCD_TypeDef xLCD;                     // ç®¡ç†LCDé‡è¦å‚æ•°
 
 
-/******************************* ¶¨Òå³£ÓÃÑÕÉ«Öµ *****************************/
-#define      WHITE               0xFFFF       // °×É«
-#define      BLACK               0x0000       // ºÚÉ« 
-#define      GREY                0xF7DE       // »ÒÉ« 
-#define      GRAY                0X8430       // »ÒÉ«
-#define      RED                 0xF800       // ºì 
-#define      MAGENTA             0xF81F       // ÑóºìÉ« 
-#define      GRED                0xFFE0       // ÉîºìÉ«
-#define      BROWN               0XBC40       // ×ØÉ«
-#define      BRRED               0XFC07       // ×ØºìÉ«
-#define      GREEN               0x07E0       // ÂÌ 
-#define      CYAN                0x7FFF       // ÇàÉ« 
-#define      YELLOW              0xFFE0       // »ÆÉ« 
-#define      LIGHTGREEN          0X841F       // Ç³ÂÌÉ« 
-#define      BLUE                0x001F       // À¶ 
-#define      GBLUE               0x07FF       // Ç³À¶ 1
-#define      LIGHTBLUE           0X7D7C       // Ç³À¶ 2
-#define      BLUE2               0x051F       // Ç³À¶ 3
-#define      GRAYBLUE            0X5458       // »ÒÀ¶ 
-#define      DARKBLUE            0X01CF       // ÉîÀ¶
-#define      LGRAY               0XC618       // Ç³»ÒÉ«,´°Ìå±³¾°É«
-#define      LGRAYBLUE           0XA651       // Ç³»ÒÀ¶É«(ÖĞ¼ä²ãÑÕÉ«)
-#define      LBBLUE              0X2B12       // Ç³×ØÀ¶É«(Ñ¡ÔñÌõÄ¿µÄ·´É«)
+/******************************* å®šä¹‰å¸¸ç”¨é¢œè‰²å€¼ *****************************/
+#define      WHITE               0xFFFF       // ç™½è‰²
+#define      BLACK               0x0000       // é»‘è‰² 
+#define      GREY                0xF7DE       // ç°è‰² 
+#define      GRAY                0X8430       // ç°è‰²
+#define      RED                 0xF800       // çº¢ 
+#define      MAGENTA             0xF81F       // æ´‹çº¢è‰² 
+#define      GRED                0xFFE0       // æ·±çº¢è‰²
+#define      BROWN               0XBC40       // æ£•è‰²
+#define      BRRED               0XFC07       // æ£•çº¢è‰²
+#define      GREEN               0x07E0       // ç»¿ 
+#define      CYAN                0x7FFF       // é’è‰² 
+#define      YELLOW              0xFFE0       // é»„è‰² 
+#define      LIGHTGREEN          0X841F       // æµ…ç»¿è‰² 
+#define      BLUE                0x001F       // è“ 
+#define      GBLUE               0x07FF       // æµ…è“ 1
+#define      LIGHTBLUE           0X7D7C       // æµ…è“ 2
+#define      BLUE2               0x051F       // æµ…è“ 3
+#define      GRAYBLUE            0X5458       // ç°è“ 
+#define      DARKBLUE            0X01CF       // æ·±è“
+#define      LGRAY               0XC618       // æµ…ç°è‰²,çª—ä½“èƒŒæ™¯è‰²
+#define      LGRAYBLUE           0XA651       // æµ…ç°è“è‰²(ä¸­é—´å±‚é¢œè‰²)
+#define      LBBLUE              0X2B12       // æµ…æ£•è“è‰²(é€‰æ‹©æ¡ç›®çš„åè‰²)
 
 
 
 /*****************************************************************************
- ** ÉùÃ÷È«¾Öº¯Êı
- ** (²»ÓÃĞŞ¸Ä)
+ ** å£°æ˜å…¨å±€å‡½æ•°
+ ** (ä¸ç”¨ä¿®æ”¹)
 ****************************************************************************/
-void LCD_Init(void);                                                                                       // ³õÊ¼»¯
-void LCD_SetDir(uint8_t dir);                                                                              // ÉèÖÃÏÔÊ¾·½Ïò
-void LCD_GUI(void);                                                                                        // ¼òµ¥µÄÏÔÊ¾½çÃæ
-void LCD_DisplayOn(void);                                                                                  // ¿ªÏÔÊ¾
-void LCD_DisplayOff(void);                                                                                 // ¹ØÏÔÊ¾
-void LCD_DrawPoint(uint16_t  x, uint16_t  y, uint16_t _color);                                             // »­µãº¯Êı
-void LCD_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint16_t color);                         // Ìî³äµ¥É«
-void LCD_Line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color);                         // »­Ïß
-void LCD_Circle(uint16_t Xpos, uint16_t Ypos, uint16_t Radius, uint16_t _color);                           // »­Ô²
-void LCD_String(uint16_t x, uint16_t y, char *pFont, uint8_t size, uint32_t fColor, uint32_t bColor);      // ÏÔÊ¾ÈÎÒâ×Ö·û´®(Ö§³ÖÓ¢ÎÄ¡¢ºº×Ö)
-void LCD_Image(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const uint8_t *image);             // Í¼Æ¬
-void LCD_ShowChinese(uint8_t x, uint8_t y, uint8_t size, uint8_t indux, uint32_t fColor, uint32_t bColor); // ÏÔÊ¾×ÔĞĞ×ªÄ£µÄÎÄ±¾
-void LCD_Cross(uint16_t x, uint16_t y, uint16_t len, uint32_t fColor);                                     // ÓÃÓÚ´¥ÃşĞ£×¼£º»­Ê®×ÖÏß
-void LCD_DispFlush(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const uint16_t *pData);        // ÔÚÖ¸¶¨ÇøÓòÌî³äÊı¾İ£¬ÊÊÓÃÓÚÍ¼Æ¬¡¢LVGLµÈ
+void LCD_Init(void);                                                                                       // åˆå§‹åŒ–
+void LCD_SetDir(uint8_t dir);                                                                              // è®¾ç½®æ˜¾ç¤ºæ–¹å‘
+void LCD_GUI(void);                                                                                        // ç®€å•çš„æ˜¾ç¤ºç•Œé¢
+void LCD_DisplayOn(void);                                                                                  // å¼€æ˜¾ç¤º
+void LCD_DisplayOff(void);                                                                                 // å…³æ˜¾ç¤º
+void LCD_DrawPoint(uint16_t  x, uint16_t  y, uint16_t _color);                                             // ç”»ç‚¹å‡½æ•°
+void LCD_Fill(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey, uint16_t color);                         // å¡«å……å•è‰²
+void LCD_Line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color);                         // ç”»çº¿
+void LCD_Circle(uint16_t Xpos, uint16_t Ypos, uint16_t Radius, uint16_t _color);                           // ç”»åœ†
+void LCD_String(uint16_t x, uint16_t y, char *pFont, uint8_t size, uint32_t fColor, uint32_t bColor);      // æ˜¾ç¤ºä»»æ„å­—ç¬¦ä¸²(æ”¯æŒè‹±æ–‡ã€æ±‰å­—)
+void LCD_Image(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const uint8_t *image);             // å›¾ç‰‡
+void LCD_ShowChinese(uint8_t x, uint8_t y, uint8_t size, uint8_t indux, uint32_t fColor, uint32_t bColor); // æ˜¾ç¤ºè‡ªè¡Œè½¬æ¨¡çš„æ–‡æœ¬
+void LCD_Cross(uint16_t x, uint16_t y, uint16_t len, uint32_t fColor);                                     // ç”¨äºè§¦æ‘¸æ ¡å‡†ï¼šç”»åå­—çº¿
+void LCD_DispFlush(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const uint16_t *pData);        // åœ¨æŒ‡å®šåŒºåŸŸå¡«å……æ•°æ®ï¼Œé€‚ç”¨äºå›¾ç‰‡ã€LVGLç­‰
 
 
 #endif

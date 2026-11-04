@@ -1,22 +1,22 @@
-/* USER CODE BEGIN Header */
+﻿/* USER CODE BEGIN Header */
 /***********************************************************************************************************************************
- ** �������д��  ħŮ�������Ŷ�
- ** ����    ����  ħŮ������ 1      https://demoboard.taobao.com
+ ** 【代码编写】  魔女开发板团队
+ ** 【淘    宝】  魔女开发板 1      https://demoboard.taobao.com
  ***********************************************************************************************************************************
- ** ��ʵ�����ơ�  2.8��_��ʾ�ۺ� + UART2_IMU����
+ ** 【实验名称】  2.8寸_显示综合 + UART2_IMU接入
  **
- ** ������ƽ̨��  STM32F407 + keil5 + HAL��
+ ** 【适用平台】  STM32F407 + keil5 + HAL库
  **
- ** �� CubeMX ��  1- ����ʹ��CubeMX��������
+ ** 【 CubeMX 】  1- 无需使用CubeMX配置引脚
  **
- ** ����ֲ˵����  1- ���Ʊ����̵�LCD_ILI9341��W25Q128�ļ��У���Ŀ�깤���ļ�����;
- **               2- ����ͷ�ļ�·���� Keil > Option > C/C++ > Include Paths, ������������Ŀ���ļ��е�Ŀ¼·��;
- **               3- ����C�ļ�������: Keil > ��๤�̹�������˫��Ŀ���ļ��� > ѡ�� bsp_LCD_ILI9341.c��bsp_W25Q128.c;
- **               4- �����ļ�����:    #include bsp_LCD_ILI9341.h�����ĸ��ļ�����Ҫʹ���亯�����ܣ�����������ļ�������������;
+ ** 【移植说明】  1- 复制本工程的LCD_ILI9341和W25Q128文件夹，到目标工程文件夹中;
+ **               2- 添加头文件路径： Keil > Option > C/C++ > Include Paths, 添加上述两个目标文件夹的目录路径;
+ **               3- 添加C文件到工程: Keil > 左侧工程管理器中双击目标文件夹 > 选择 bsp_LCD_ILI9341.c和bsp_W25Q128.c;
+ **               4- 添加文件引用:    #include bsp_LCD_ILI9341.h，即哪个文件中需要使用其函数功能，就在其代码文件顶部添加引用;
  **
- ** ������ʹ�á�  1- ��ʼ����ֱ�ӵ���h�к���������ɳ�ʼ����
- **               2- �ı���������ѱ�д4��ʾ���������ɰ������б�д���޸�;
- **               3- ���߻�Բ��ͼ�λ����������ѱ�дʾ�����������ڴ˻����ϣ������д�����Ƶ�ͼ�κ���������ʾͼƬ�����ư�ť��.
+ ** 【代码使用】  1- 初始化：直接调用h中函数即可完成初始化。
+ **               2- 文本的输出，已编写4种示范函数，可按需自行编写、修改;
+ **               3- 画线画圆等图形基本函数，已编写示范函数，可在此基础上，按需编写更完善的图形函数，如显示图片、绘制按钮等.
  **
  **
  **
@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-/* �����û����룬����д����Ե�BEGIN��ENDע����֮�䣬������������ʱ�ᱻɾ�� */
+/* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 
 #include "bsp_W25Q128.h"
 #include "bsp_LCD_ILI9341.h"
@@ -46,6 +46,34 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+/* ================= 主轴电机：TSDA-C11A 脉冲/方向控制 =================
+ * 接线：CN3 的 PUL+ / DIR+ / ENA+ 接 +5V，PUL- / DIR- / ENA- 各接一路
+ *       经 3.3V→5V 电平转换后的 GPIO（共阳极接法）。
+ *       - PUL- 低电平期间光耦导通，每个低脉冲计一步（TIM4_CH1 硬件 PWM）
+ *       - DIR+ 与 DIR- 之间为低电平时正转，高电平时反转 → DIR- 输出高 = 正转
+ *       - ENA+ 与 ENA- 之间为低电平时使能，高电平时切断电机电源
+ * 若实测方向或使能相反，把对应的 LEVEL 宏改成相反电平即可。
+ * 按键：KEY_1(PA0) 正转、KEY_2(PA1) 反转，两键都不按（或同时按下）停止。
+ * 速度：10kHz ÷ 10000 脉冲/圈 = 1 圈/秒 = 60RPM（电子齿轮 1:1 时）
+ ******************************************************************************/
+#define MOTOR_PULSE_HZ           10000UL
+#define MOTOR_TIM_CLK_HZ         84000000UL                   // TIM4 挂 APB1，定时器时钟 = 42MHz × 2
+#define MOTOR_TIM_PERIOD         (MOTOR_TIM_CLK_HZ / MOTOR_PULSE_HZ - 1U)
+#define MOTOR_CCR_IDLE           (MOTOR_TIM_PERIOD + 1U)      // CCR > ARR：PWM 恒高，光耦关闭
+#define MOTOR_CCR_RUN            ((MOTOR_TIM_PERIOD + 1U) / 2U) // 50% 占空比
+
+#define MOTOR_PUL_GPIO_Port      GPIOD
+#define MOTOR_PUL_Pin            GPIO_PIN_12                  // TIM4_CH1，AF2
+#define MOTOR_DIR_GPIO_Port      GPIOB
+#define MOTOR_DIR_Pin            GPIO_PIN_1
+#define MOTOR_ENA_GPIO_Port      GPIOB
+#define MOTOR_ENA_Pin            GPIO_PIN_5
+
+#define MOTOR_DIR_FORWARD_LEVEL  GPIO_PIN_SET                  // DIR- 高电平 = 差分低电平 = 正转(CCW)
+#define MOTOR_DIR_REVERSE_LEVEL  GPIO_PIN_RESET                // DIR- 低电平 = 差分高电平 = 反转(CW)
+#define MOTOR_ENA_ENABLE_LEVEL   GPIO_PIN_SET                  // ENA- 高电平 = 差分低电平 = 使能
+#define MOTOR_ENA_DISABLE_LEVEL  GPIO_PIN_RESET                // ENA- 低电平 = 差分高电平 = 失能(自由)
 
 /* USER CODE END PD */
 
@@ -233,7 +261,76 @@ static void IMU_Display(void)
     else
         LCD_String(10, 232, "IMU: OK 9600  ", 16, YELLOW, BLACK);
 }
-/* �����û����룬����д����Ե�BEGIN��ENDע����֮�䣬������������ʱ�ᱻɾ�� */
+
+/* ================= 主轴电机：脉冲位置控制 ================= */
+static void Motor_Init(void)
+{
+    GPIO_InitTypeDef gpio = {0};
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    __HAL_RCC_TIM4_CLK_ENABLE();
+
+    // 方向/使能：推挽输出，初始为正转 + 失能
+    HAL_GPIO_WritePin(MOTOR_DIR_GPIO_Port, MOTOR_DIR_Pin, MOTOR_DIR_FORWARD_LEVEL);
+    HAL_GPIO_WritePin(MOTOR_ENA_GPIO_Port, MOTOR_ENA_Pin, MOTOR_ENA_DISABLE_LEVEL);
+    gpio.Pin   = MOTOR_DIR_Pin | MOTOR_ENA_Pin;
+    gpio.Mode  = GPIO_MODE_OUTPUT_PP;
+    gpio.Pull  = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &gpio);
+
+    // PUL：PD12 复用为 TIM4_CH1
+    gpio.Pin       = MOTOR_PUL_Pin;
+    gpio.Mode      = GPIO_MODE_AF_PP;
+    gpio.Pull      = GPIO_NOPULL;
+    gpio.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio.Alternate = GPIO_AF2_TIM4;
+    HAL_GPIO_Init(MOTOR_PUL_GPIO_Port, &gpio);
+
+    // TIM4 通道1：PWM 模式1，空闲时输出恒高（PUL- 高电平 = 光耦关闭）
+    TIM4->CR1   = 0;
+    TIM4->PSC   = 0;
+    TIM4->ARR   = MOTOR_TIM_PERIOD;
+    TIM4->CCR1  = MOTOR_CCR_IDLE;
+    TIM4->CCMR1 = TIM_CCMR1_OC1PE | (0x6UL << TIM_CCMR1_OC1M_Pos);  // PWM1 + 预装载
+    TIM4->CCER  = TIM_CCER_CC1E;                                    // 高电平有效
+    TIM4->EGR   = TIM_EGR_UG;                                       // 立即装入
+    TIM4->CR1   = TIM_CR1_ARPE | TIM_CR1_CEN;                       // 启动计数
+}
+
+static void Motor_SetRun(int8_t dir)                 // dir: 1-正转, -1-反转, 0-停止
+{
+    static int8_t lastDir = 0;
+
+    if (dir == 0)
+    {
+        TIM4->CCR1 = MOTOR_CCR_IDLE;                                // 先停脉冲
+        HAL_GPIO_WritePin(MOTOR_ENA_GPIO_Port, MOTOR_ENA_Pin, MOTOR_ENA_DISABLE_LEVEL);
+        lastDir = 0;
+        printf("MOTOR: STOP\r");
+        return;
+    }
+
+    if (dir == lastDir) return;                                    // 方向未变化，无需重复操作
+
+    TIM4->CCR1 = MOTOR_CCR_IDLE;                                   // 换向前先停脉冲
+    HAL_Delay(2);                                                  // 等当前 PWM 周期走完
+    HAL_GPIO_WritePin(MOTOR_DIR_GPIO_Port, MOTOR_DIR_Pin,
+                      dir > 0 ? MOTOR_DIR_FORWARD_LEVEL : MOTOR_DIR_REVERSE_LEVEL);
+
+    if (lastDir == 0)                                              // 从停止状态启动，需要先使能
+    {
+        HAL_GPIO_WritePin(MOTOR_ENA_GPIO_Port, MOTOR_ENA_Pin, MOTOR_ENA_ENABLE_LEVEL);
+        HAL_Delay(20);                                             // 等驱动器使能完成
+    }
+
+    TIM4->CCR1 = MOTOR_CCR_RUN;                                    // 输出脉冲
+    lastDir = dir;
+    if (dir > 0) printf("MOTOR: RUN FWD\r");
+    else         printf("MOTOR: RUN REV\r");
+}
+/* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 
 
 /* USER CODE END 0 */
@@ -268,8 +365,9 @@ int main(void)
     MX_GPIO_Init();
     MX_USART1_UART_Init();
     /* USER CODE BEGIN 2 */
-    /* �����û����룬����д����Ե�BEGIN��ENDע����֮�䣬������������ʱ�ᱻɾ�� */
+    /* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 
+    Motor_Init();                                                              // 先初始化电机引脚，避免上电期间 PUL-/DIR-/ENA- 悬空
     UART1_Init(115200);
     UART2_Init(9600);                                                          // SEN0692 factory default
     IMU_SetBaud115200();                                                       // one-shot: move module to 115200 (idempotent)
@@ -281,20 +379,18 @@ int main(void)
         IMU_Probe(2);
     }
 
-    printf("\r\r\r=========== STM32F407 �忨�ϵ��ʼ����� ===========\r");             // ע�⣬printf�����������ض�������ʹ�ã��������Ῠ��; ��ʾ������дfputc, ��main.c�ĵײ�����
-    printf("ϵͳ����ʱ�ӣ�           %d MHz\r", SystemCoreClock / 1000000);       // ���ϵͳ����ʱ�ӵ�Ƶ�ʣ��Լ���Ƿ���������
+    printf("\r\r\r=========== STM32F407 板卡上电初始化完成 ===========\r");             // 注意，printf函数，必须重定向后才能使用，否则程序会卡死; 本示例已重写fputc, 在main.c的底部附近
+    printf("系统运行时钟：           %d MHz\r", SystemCoreClock / 1000000);       // 输出系统运行时钟的频率，以检查是否配置正常
 
-    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);              // LED���������øߵ�ƽ��������
+    HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);              // LED控制引脚置高电平，红亮灭
 
-    W25Q128_Init();                                                               // W25Q128 ��ʼ��
+    W25Q128_Init();                                                               // W25Q128 初始化
 
-    LCD_Init();                                                                   // LCD ILI9341 ��ʼ��
-    LCD_SetDir(0);                                                                // ������ʾ����0-������1-����
+    LCD_Init();                                                                   // LCD ILI9341 初始化
+    LCD_SetDir(0);                                                                // 设置显示方向：0-竖屏、1-横屏
 
-    // ��������
+    // 顶部标题
     LCD_String(5, 5, "STM32F407", 16, GREEN, BLACK);
-
-
 
     /* USER CODE END 2 */
 
@@ -305,34 +401,59 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        /* �����û����룬����д����Ե�BEGIN��ENDע����֮�䣬������������ʱ�ᱻɾ�� */
+        /* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 
-        /** 1ms��ʱ **/
-        HAL_Delay(1 - 1);                                                  // ��ʱ������������ms; ע�⣺CubeMX���ɵ�HAL_Delay(), �����ڲ�Ϊ������Ч��������Դ������+1����ˣ����ֻ��Ҫ��ms��ʱ���鴫�����ʱ-1�������Ҫ�󼸰�ms�ķǾ�׼��ʱ���ǲ�����-1ҲӰ�첻��
+        /** 1ms延时 **/
+        HAL_Delay(1 - 1);                                                  // 延时函数，参数：ms; 注意：CubeMX生成的HAL_Delay(), 函数内部为避免无效操作，会对传入参数+1，因此，如果只需要几ms延时建议传入参数时-1，如果需要大几百ms的非精准延时，那参数不-1也影响不大
 
-        /** ������� **/
-        //XPT2046_TouchHandler();                                            // ������״̬��⣺1:����Ƿ��а��£�2:����а��£��ʹ����ð��µ�����
+        /** 触摸检查 **/
+        //XPT2046_TouchHandler();                                            // 触摸屏状态检测：1:检测是否有按下，2:如果有按下，就处理好按下的坐标
 
-        /** ���UART1�Ƿ��յ����� (��������) **/
-        if (UART1_GetRxNum())                                              // �ж�UART1�Ƿ��ȡ����һ֡���ݣ��������صĽ����ֽ���������0����Ϊ�յ���һ֡����
+        /** 检查UART1是否收到数据 (串口助手) **/
+        if (UART1_GetRxNum())                                              // 判断UART1是否获取到新一帧数据：函数返回的接收字节数，大于0，即为收到新一帧数据
         {
-            uint8_t *rxData = UART1_GetRxData();                           // ��ȡ���ݵĵ�ַ
-            uint16_t rxNum = UART1_GetRxNum();                             // ��ȡ���ݵ��ֽ���
-            printf("\r<<<<< UART1 ���յ�һ֡���� \r");                     // ��ʾUART1���յ�����
-            printf("�ֽ�����%d \r", rxNum);                                // ��ʾ�ֽ���
-            printf("ASCII : %s\r", (char *)rxData);                        // ��ʾ���ݣ���ASCII��ʽ��ʾ�������ַ����ķ�ʽ��ʾ
-            printf("16����: ");                                            // ��ʾ���ݣ���16���Ʒ�ʽ����ʾÿһ���ֽڵ�ֵ
-            for (uint16_t i = 0; i < rxNum; i++)                           // ����ֽ����
-                printf("0x%02X ", rxData[i]);                              // ��16������ʾ
-            printf("\r\r");                                                // ��ʾ����
-            UART1_ClearRx();                                               // ��Ҫ����0���ձ�־������0���յ����ֽ���; ÿ�δ���������ݣ���Ҫ�������������0
+            uint8_t *rxData = UART1_GetRxData();                           // 获取数据的地址
+            uint16_t rxNum = UART1_GetRxNum();                             // 获取数据的字节数
+            printf("\r<<<<< UART1 接收到一帧数据 \r");                     // 提示UART1接收到数据
+            printf("字节数：%d \r", rxNum);                                // 显示字节数
+            printf("ASCII : %s\r", (char *)rxData);                        // 显示数据，以ASCII方式显示，即以字符串的方式显示
+            printf("16进制: ");                                            // 显示数据，以16进制方式，显示每一个字节的值
+            for (uint16_t i = 0; i < rxNum; i++)                           // 逐个字节输出
+                printf("0x%02X ", rxData[i]);                              // 以16进制显示
+            printf("\r\r");                                                // 显示换行
+            UART1_ClearRx();                                               // 重要：清0接收标志，即清0接收到的字节数; 每次处理完成数据，就要调用这个函数清0
 
-            // UART1_SendString("Hello World��\r");                        // ʾ�� UART1_SendString( )��ʹ��; �ɽ�����pritnf�ĸ�ʽ������
-            // UART1_SendData((uint8_t*)"Hello World!\r", 13);             // ʾ�� UART1_SendData( )��ʹ��, �����ڷ����ַ��������顢�ṹ�����ݵ�
+            // UART1_SendString("Hello World！\r");                        // 示范 UART1_SendString( )的使用; 可接受像pritnf的格式化参数
+            // UART1_SendData((uint8_t*)"Hello World!\r", 13);             // 示范 UART1_SendData( )的使用, 可用于发送字符串、数组、结构体数据等
         }
 
-        /** ÿ500ms��˸һ����ɫLED **/
-        /** IMU: SEN0692 Modbus-RTU poll state machine (UART2 @9600) **/
+        /** 主轴电机：KEY_1(PA0) 正转、KEY_2(PA1) 反转，都不按停止（20ms 消抖） **/
+        static int8_t   motorDir    = 0;                          // 当前运行方向：1-正转, -1-反转, 0-停止
+        static uint16_t motorKeyCnt = 0;
+        uint8_t keyFwd = (HAL_GPIO_ReadPin(KEY_1_GPIO_Port, KEY_1_Pin) == GPIO_PIN_SET) ? 1 : 0;  // KEY_1 按下为高
+        uint8_t keyRev = (HAL_GPIO_ReadPin(KEY_2_GPIO_Port, KEY_2_Pin) == GPIO_PIN_RESET) ? 1 : 0; // KEY_2 按下为低
+        int8_t  motorWant = 0;
+
+        if (keyFwd && !keyRev)      motorWant = 1;
+        else if (keyRev && !keyFwd) motorWant = -1;
+        else                        motorWant = 0;                // 都不按或两键同时按下：停止
+
+        if (motorWant != motorDir)
+        {
+            if (++motorKeyCnt >= 20)
+            {
+                motorKeyCnt = 0;
+                motorDir = motorWant;
+                Motor_SetRun(motorDir);
+            }
+        }
+        else
+        {
+            motorKeyCnt = 0;
+        }
+
+        /** 每500ms闪烁一次蓝色LED **/
+        /** IMU: SEN0692 Modbus-RTU poll state machine (UART2 @115200) **/
         static uint8_t  imuPhase = 0;              // 0-idle 1-waitAcc 2-waitGyr
         static uint16_t imuTickMs = 0, imuWaitMs = 0;
         imuTickMs++;
@@ -387,10 +508,10 @@ int main(void)
         }
 
         static uint16_t msLED = 0;
-        if (++msLED == 500)                                                // ÿ500msִ��һ��
+        if (++msLED == 500)                                                // 每500ms执行一次
         {
-            msLED = 0;                                                     // ������0
-            HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);          // ���ɵ���˸��ɫLED�������ⲿ�۲�ϵͳ�Ƿ���������
+            msLED = 0;                                                     // 计数清0
+            HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);          // 规律地闪烁蓝色LED，方便外部观察系统是否正常运行
         }
 
     }
@@ -443,47 +564,47 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-/* �����û����룬����д����Ե�BEGIN��ENDע����֮�䣬������������ʱ�ᱻɾ�� */
+/* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 
 
 
 /******************************************************************************
- * ��  ���� HAL_GPIO_EXTI_Callback
- * ��  �ܣ� EXTI�жϻص�����
- * ��  ���� uint16_t  GPIO_Pin    ���ű�ţ�������Χ��GPIO_Pin_0 ~ GPIO_Pin_15
- * ����ֵ�� ��
- * ��  ע�� CubeMX���ɵĴ�����˼ά�ͷ���ϣ���ʹ�ñ�׼���дʱ�кܴ������
- *          1������ǻص������������жϷ������������ĵ��ã�EXTIx_IRQHandler() > HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_x) > HAL_GPIO_EXTI_Callback(GPIO_PIN_x)
- *          2������ʹ������������ƣ���Ϊ����CubeMX����ʱ���ѱ�д���˸��ֺ������á�����������(��stm32xx_hal_gpio.c�ĵײ�); ��������ԭ���������������룬������д������
- *          3���ж����������󣬱��������Զ����ã���������˹�����; Ҳ��������жϱ�־����������ΪHAL_GPIO_EXTI_IRQHandler()���������в���;
- *          4�����ɵ�����EXTI�жϷ���������ͳһ������������������ű��������
- *          5���жϲ��������������ű�ţ�����֪�����ĸ��ⲿ�ж��߲������ж��ź�
+ * 函  数： HAL_GPIO_EXTI_Callback
+ * 功  能： EXTI中断回调函数
+ * 参  数： uint16_t  GPIO_Pin    引脚编号，参数范围：GPIO_Pin_0 ~ GPIO_Pin_15
+ * 返回值： 无
+ * 备  注： CubeMX生成的代码在思维和风格上，与使用标准库编写时有很大的区别：
+ *          1：这个是回调函数，不是中断服务函数。完整的调用：EXTIx_IRQHandler() > HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_x) > HAL_GPIO_EXTI_Callback(GPIO_PIN_x)
+ *          2：必须使用这个函数名称，因为它在CubeMX生成时，已被写好了各种函数调用、函数弱定义(在stm32xx_hal_gpio.c的底部); 不建议在原弱定义中增添代码，而是重写本函数
+ *          3：中断条件触发后，本函数被自动调用，无需进行人工调用; 也无需进行中断标志的清理，因为HAL_GPIO_EXTI_IRQHandler()函数中已有操作;
+ *          4：生成的所有EXTI中断服务函数，都统一调用这个函数，以引脚编号作参数
+ *          5：判断参数传进来的引脚编号，即可知道是哪个外部中断线产生的中断信号
 ******************************************************************************/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    if (GPIO_Pin == KEY_1_Pin)                                  // ����1 �������ж��źţ�KEY_1��PA0����ʱ����������ʱ�ߵ�ƽ�������ش���
+    if (GPIO_Pin == KEY_1_Pin)                                  // 按键1 产生的中断信号：KEY_1、PA0、闲时下拉、按下时高电平、上升沿触发
     {
-        HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);     // ��ת��ɫLED��
-        printf("KEY_1 ����\r");                                 // ͨ���������������ʾ
+        HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);     // 反转红色LED灯
+        printf("KEY_1 按下\r");                                 // 通过串口助手输出提示
     }
 
-    if (GPIO_Pin == KEY_2_Pin)                                  // ����2 �������ж��źţ�KEY_2��PA1����ʱ����������ʱ�͵�ƽ���½��ش���
+    if (GPIO_Pin == KEY_2_Pin)                                  // 按键2 产生的中断信号：KEY_2、PA1、闲时上拉、按下时低电平、下降沿触发
     {
-        HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);     // ��ת��ɫLED��
-        printf("KEY_2 ����\r");                                 // ͨ���������������ʾ
+        HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);     // 反转红色LED灯
+        printf("KEY_2 按下\r");                                 // 通过串口助手输出提示
     }
 
-    if (GPIO_Pin == KEY_3_Pin)                                  // ����3 �������ж��źţ�KEY_3��PA4����ʱ���������µ͸ߵ�ƽ���½��ش���
+    if (GPIO_Pin == KEY_3_Pin)                                  // 按键3 产生的中断信号：KEY_3、PA4、闲时上拉、按下低高电平、下降沿触发
     {
-        HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);     // ��ת��ɫLED��
-        printf("KEY_3 ����\r");                                 // ͨ���������������ʾ
+        HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);     // 反转红色LED灯
+        printf("KEY_3 按下\r");                                 // 通过串口助手输出提示
     }
 }
 
 
 
 
-/* �����û����룬����д����Ե�BEGIN��ENDע����֮�䣬������������ʱ�ᱻɾ�� */
+/* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 /* USER CODE END 4 */
 
 /**

@@ -1,47 +1,47 @@
-/***********************************************************************************************************************************
- ** ¡¾ÎÄ¼şÃû³Æ¡¿  bsp_w25qxx.c
- ** ¡¾±àĞ´ÈËÔ±¡¿  Ä§Å®¿ª·¢°åÍÅ¶Ó
- ** ¡¾¸üĞÂ·ÖÏí¡¿
- ** ¡¾ÌÔ    ±¦¡¿  Ä§Å®¿ª·¢°å      https://demoboard.taobao.com
+ï»¿/***********************************************************************************************************************************
+ ** ã€æ–‡ä»¶åç§°ã€‘  bsp_w25qxx.c
+ ** ã€ç¼–å†™äººå‘˜ã€‘  é­”å¥³å¼€å‘æ¿å›¢é˜Ÿ
+ ** ã€æ›´æ–°åˆ†äº«ã€‘
+ ** ã€æ·˜    å®ã€‘  é­”å¥³å¼€å‘æ¿      https://demoboard.taobao.com
  ***********************************************************************************************************************************
- ** ¡¾ÎÄ¼ş¹¦ÄÜ¡¿  ³õÊ¼»¯GPIO¡¢SPI, ¸÷¹¦ÄÜº¯Êı
- ** ¡¾ÊÊÓÃÆ½Ì¨¡¿  STM32F407 + HAL¿â + keil5
+ ** ã€æ–‡ä»¶åŠŸèƒ½ã€‘  åˆå§‹åŒ–GPIOã€SPI, å„åŠŸèƒ½å‡½æ•°
+ ** ã€é€‚ç”¨å¹³å°ã€‘  STM32F407 + HALåº“ + keil5
  **
- ** ¡¾¸üĞÂ¼ÇÂ¼¡¿  2024-01-25  ´Ó±ê×¼¿â¹¤³ÌÒÆÖ²ÖÁHAL¿â¹¤³Ì
- **               2023-01-27  ÍêÉÆ×¢ÊÍ¡¢´úÂë¸ñÊ½
- **               2022-12-29  ´´½¨ÎÄ¼ş£¬´ÓF103ÒÆÖ²ÖÁF407
+ ** ã€æ›´æ–°è®°å½•ã€‘  2024-01-25  ä»æ ‡å‡†åº“å·¥ç¨‹ç§»æ¤è‡³HALåº“å·¥ç¨‹
+ **               2023-01-27  å®Œå–„æ³¨é‡Šã€ä»£ç æ ¼å¼
+ **               2022-12-29  åˆ›å»ºæ–‡ä»¶ï¼Œä»F103ç§»æ¤è‡³F407
 ************************************************************************************************************************************/
 #include "bsp_W25Q128.h"
 
 
 
 
-//W25QÏµÁĞĞ¾Æ¬ĞÍºÅ·µ»ØÖµ
+//W25Qç³»åˆ—èŠ¯ç‰‡å‹å·è¿”å›å€¼
 #define    W25Q80            0XEF13
 #define    W25Q16            0XEF14
 #define    W25Q32            0XEF15
 #define    W25Q64            0XEF16
 #define    W25Q128           0XEF17
 #define    W25Q256           0XEF18
-//#define  W25Qxx    65519    // ºÜ¶àÊ±ºòÖØĞÂÏÂÔØºó¶Á³öµÄ¶¼ÊÇ65519
+//#define  W25Qxx    65519    // å¾ˆå¤šæ—¶å€™é‡æ–°ä¸‹è½½åè¯»å‡ºçš„éƒ½æ˜¯65519
 #define    W25Q128_CS_HIGH    (W25Q128_CS_GPIO -> BSRR =  W25Q128_CS_PIN)
 #define    W25Q128_CS_LOW     (W25Q128_CS_GPIO -> BSRR =  W25Q128_CS_PIN << 16)
 
 
 
-xW25Q_TypeDef  xW25Q128;      // ÉùÃ÷È«¾Ö½á¹¹Ìå, ÓÃÓÚ¼ÇÂ¼w25qxxĞÅÏ¢
+xW25Q_TypeDef  xW25Q128;      // å£°æ˜å…¨å±€ç»“æ„ä½“, ç”¨äºè®°å½•w25qxxä¿¡æ¯
 
 
 
 
 
-// 5_1 ·¢ËÍ1×Ö½Ú,·µ»Ø1×Ö½Ú
-// SPIÍ¨ĞÅ,Ö»Ò»¸ö¶¯×÷:ÏòDRĞ´Èë´ÓÉèÃüÁîÖµ,Í¬²½¶Á³öÊı¾İ!Ğ´¶Á×éºÏ,°´´ÓÉèÊ±ĞòÍ¼À´. ×÷ÎªÖ÷Éè,ÒòÎªÊÕ·¢Í¬²½,Á¬½ÓÊÕ·¢ËÍÖĞ¶ÏÒ²²»ÓÃ¿ª,Î´ÑéÖ¤ÆäËüÖĞ¶Ï¶ÔÆä¹¤×÷µÄÓ°Ïì.
+// 5_1 å‘é€1å­—èŠ‚,è¿”å›1å­—èŠ‚
+// SPIé€šä¿¡,åªä¸€ä¸ªåŠ¨ä½œ:å‘DRå†™å…¥ä»è®¾å‘½ä»¤å€¼,åŒæ­¥è¯»å‡ºæ•°æ®!å†™è¯»ç»„åˆ,æŒ‰ä»è®¾æ—¶åºå›¾æ¥. ä½œä¸ºä¸»è®¾,å› ä¸ºæ”¶å‘åŒæ­¥,è¿æ¥æ”¶å‘é€ä¸­æ–­ä¹Ÿä¸ç”¨å¼€,æœªéªŒè¯å…¶å®ƒä¸­æ–­å¯¹å…¶å·¥ä½œçš„å½±å“.
 static uint8_t  sendByte(uint8_t d)
 {
     uint16_t retry = 0;
 
-    while ((W25Q128_SPI ->SR & 2) == 0)      // µÈ´ı·¢ËÍÇøÎª¿Õ
+    while ((W25Q128_SPI ->SR & 2) == 0)      // ç­‰å¾…å‘é€åŒºä¸ºç©º
     {
         retry++;
         if (retry > 1000)    return 0;
@@ -49,7 +49,7 @@ static uint8_t  sendByte(uint8_t d)
     W25Q128_SPI ->DR = d;
 
     retry = 0;
-    while ((W25Q128_SPI->SR & 1) == 0)       // µÈ´ı½ÓÊÕÍêÊı¾İ
+    while ((W25Q128_SPI->SR & 1) == 0)       // ç­‰å¾…æ¥æ”¶å®Œæ•°æ®
     {
         retry++;
         if (retry > 1000)    return 0;
@@ -59,41 +59,41 @@ static uint8_t  sendByte(uint8_t d)
 
 
 
-// 5_2 Ğ´Ê¹ÄÜ
+// 5_2 å†™ä½¿èƒ½
 static void writeEnable()
 {
     W25Q128_CS_LOW ;
-    sendByte(0x6);                           // ÃüÁî: Write Enable : 06h
+    sendByte(0x6);                           // å‘½ä»¤: Write Enable : 06h
     W25Q128_CS_HIGH ;
 }
 
 
 
-// 5_3 µÈ´ı¿ÕÏĞ
+// 5_3 ç­‰å¾…ç©ºé—²
 static void WaitReady()
 {
     W25Q128_CS_LOW ;
 
-    sendByte(0x05);                          // ÃüÁî: Read Status Register : 05h
-    while (sendByte(0xFF) & 1) {}            // Ö»Òª·¢ËÍ¶Á×´Ì¬¼Ä´æÆ÷Ö¸Áî£¬Ğ¾Æ¬¾Í»á³ÖĞøÏòÖ÷»ú·¢ËÍ×îĞÂµÄ×´Ì¬¼Ä´æÆ÷ÄÚÈİ £¬Ö±µ½ÊÕµ½Í¨ĞÅµÄÍ£Ö¹ĞÅºÅ¡£
+    sendByte(0x05);                          // å‘½ä»¤: Read Status Register : 05h
+    while (sendByte(0xFF) & 1) {}            // åªè¦å‘é€è¯»çŠ¶æ€å¯„å­˜å™¨æŒ‡ä»¤ï¼ŒèŠ¯ç‰‡å°±ä¼šæŒç»­å‘ä¸»æœºå‘é€æœ€æ–°çš„çŠ¶æ€å¯„å­˜å™¨å†…å®¹ ï¼Œç›´åˆ°æ”¶åˆ°é€šä¿¡çš„åœæ­¢ä¿¡å·ã€‚
 
     W25Q128_CS_HIGH ;
 }
 
 
 
-// 5_4 ²Á³ıÒ»¸öÉÈÇø, Ã¿ÉÈÇø>150ms
+// 5_4 æ“¦é™¤ä¸€ä¸ªæ‰‡åŒº, æ¯æ‰‡åŒº>150ms
 static void eraseSector(uint32_t addr)
 {
-    if (xW25Q128.FlagInit == 0) return;      // Èç¹ûW25Qxx³õÊ¼»¯Ê§°Ü£¬ÔòÌø¹ı¼ì²â£¬·ÀÖ¹¿¨ËÀ
+    if (xW25Q128.FlagInit == 0) return;      // å¦‚æœW25Qxxåˆå§‹åŒ–å¤±è´¥ï¼Œåˆ™è·³è¿‡æ£€æµ‹ï¼Œé˜²æ­¢å¡æ­»
 
-    addr = addr * 4096;                      // ´ÓµÚ¼¸ÉÈÇø¿ªÊ¼
+    addr = addr * 4096;                      // ä»ç¬¬å‡ æ‰‡åŒºå¼€å§‹
 
     writeEnable();
     WaitReady();
-    // ÃüÁî
+    // å‘½ä»¤
     W25Q128_CS_LOW ;
-    sendByte(0x20);                          // ÃüÁî: Sector Erase(4K) : 20h
+    sendByte(0x20);                          // å‘½ä»¤: Sector Erase(4K) : 20h
     sendByte((uint8_t)(addr >> 16));
     sendByte((uint8_t)(addr >> 8));
     sendByte((uint8_t)addr);
@@ -104,42 +104,42 @@ static void eraseSector(uint32_t addr)
 
 
 
-// 5_5 Ğ´ÉÈÇø. Òª·ÖÒ³Ğ´Èë
+// 5_5 å†™æ‰‡åŒº. è¦åˆ†é¡µå†™å…¥
 static void writeSector(uint32_t addr, uint8_t *p, uint16_t num)
 {
-    if (xW25Q128.FlagInit == 0) return;           // Èç¹ûW25Qxx³õÊ¼»¯Ê§°Ü£¬ÔòÌø¹ı¼ì²â£¬·ÀÖ¹¿¨ËÀ
+    if (xW25Q128.FlagInit == 0) return;           // å¦‚æœW25Qxxåˆå§‹åŒ–å¤±è´¥ï¼Œåˆ™è·³è¿‡æ£€æµ‹ï¼Œé˜²æ­¢å¡æ­»
 
-    uint16_t pageRemain = 256;                    // ÖØÒª£¬ÖØÒª£¬ÖØÒª£ºW25QxxÃ¿¸öÒ³ÃüÁî×î´óĞ´Èë×Ö½ÚÊı:256×Ö½Ú;
+    uint16_t pageRemain = 256;                    // é‡è¦ï¼Œé‡è¦ï¼Œé‡è¦ï¼šW25Qxxæ¯ä¸ªé¡µå‘½ä»¤æœ€å¤§å†™å…¥å­—èŠ‚æ•°:256å­—èŠ‚;
 
-    for (char i = 0; i < 16; i++)                 // ÉÈÇø:4096bytes, »º´æÒ³:256bytes, Ğ´ÉÈÇøÒª·Ö16´ÎÒ³ÃüÁîĞ´Èë
+    for (char i = 0; i < 16; i++)                 // æ‰‡åŒº:4096bytes, ç¼“å­˜é¡µ:256bytes, å†™æ‰‡åŒºè¦åˆ†16æ¬¡é¡µå‘½ä»¤å†™å…¥
     {
-        writeEnable();                            // Ğ´Ê¹ÄÜ
-        WaitReady();                              // µÈ´ı¿ÕÏĞ
+        writeEnable();                            // å†™ä½¿èƒ½
+        WaitReady();                              // ç­‰å¾…ç©ºé—²
 
-        W25Q128_CS_LOW ;                          // µÍµçÆ½,¿ªÊ¼
-        sendByte(0x02);                           // ÃüÁî: page program : 02h , Ã¿¸öĞ´Ò³ÃüÁî×î´ó»º´æ256×Ö½Ú
-        sendByte((uint8_t)(addr >> 16));          // µØÖ·
+        W25Q128_CS_LOW ;                          // ä½ç”µå¹³,å¼€å§‹
+        sendByte(0x02);                           // å‘½ä»¤: page program : 02h , æ¯ä¸ªå†™é¡µå‘½ä»¤æœ€å¤§ç¼“å­˜256å­—èŠ‚
+        sendByte((uint8_t)(addr >> 16));          // åœ°å€
         sendByte((uint8_t)(addr >> 8));
         sendByte((uint8_t)addr);
-        for (uint16_t i = 0; i < pageRemain; i++) // ·¢ËÍĞ´ÈëµÄÊı¾İ
-            sendByte(p[i]);                       // ¸ßµçÆ½, ½áÊø
+        for (uint16_t i = 0; i < pageRemain; i++) // å‘é€å†™å…¥çš„æ•°æ®
+            sendByte(p[i]);                       // é«˜ç”µå¹³, ç»“æŸ
         W25Q128_CS_HIGH ;
 
-        WaitReady();                              // µÈ´ı¿ÕÏĞ
+        WaitReady();                              // ç­‰å¾…ç©ºé—²
 
-        p = p + pageRemain;                       // »º´æÖ¸ÕëÔö¼ÓÒ»Ò³×Ö½ÚÊı
-        addr = addr + pageRemain ;                // Ğ´µØÖ·Ôö¼ÓÒ»Ò³×Ö½ÚÊı
+        p = p + pageRemain;                       // ç¼“å­˜æŒ‡é’ˆå¢åŠ ä¸€é¡µå­—èŠ‚æ•°
+        addr = addr + pageRemain ;                // å†™åœ°å€å¢åŠ ä¸€é¡µå­—èŠ‚æ•°
     }
 }
 
 
 
-// ¶ÁÈ¡Ğ¾Æ¬ĞÍºÅ
+// è¯»å–èŠ¯ç‰‡å‹å·
 static uint32_t readID(void)
 {
     uint16_t Temp = 0;
     W25Q128_CS_LOW;
-    sendByte(0x90);//·¢ËÍ¶ÁÈ¡IDÃüÁî
+    sendByte(0x90);//å‘é€è¯»å–IDå‘½ä»¤
     sendByte(0x00);
     sendByte(0x00);
     sendByte(0x00);
@@ -163,31 +163,31 @@ static uint32_t readID(void)
             sprintf((char *)xW25Q128.type, "%s", "W25Q128");
             break;
         case W25Q256:
-            sprintf((char *)xW25Q128.type, "%s", "W25Q256");          // ×¢Òâ:W25Q256µÄµØÖ·ÊÇ4×Ö½Ú
+            sprintf((char *)xW25Q128.type, "%s", "W25Q256");          // æ³¨æ„:W25Q256çš„åœ°å€æ˜¯4å­—èŠ‚
             break;
         default:
-            sprintf((char *)xW25Q128.type, "%s", "FlashÉè±¸Ê§°Ü !!!");
+            sprintf((char *)xW25Q128.type, "%s", "Flashè®¾å¤‡å¤±è´¥ !!!");
             xW25Q128.FlagInit = 0;
-            printf("¶ÁÈ¡µ½µÄ´íÎóĞÍºÅÊı¾İ£º%d\r\n", Temp);
+            printf("è¯»å–åˆ°çš„é”™è¯¯å‹å·æ•°æ®ï¼š%d\r\n", Temp);
             break;
     }
 
     if (xW25Q128.FlagInit  == 1)
-        printf("Flash´æ´¢ ¼ì²â...        ĞÍºÅ:%s\r", xW25Q128.type);
+        printf("Flashå­˜å‚¨ æ£€æµ‹...        å‹å·:%s\r", xW25Q128.type);
     else
-        printf("Êı¾İ´æ´¢¼ì²â£º           ĞÍºÅ¶ÁÈ¡´íÎó£¬Éè±¸²»¿ÉÓÃ!\r");
+        printf("æ•°æ®å­˜å‚¨æ£€æµ‹ï¼š           å‹å·è¯»å–é”™è¯¯ï¼Œè®¾å¤‡ä¸å¯ç”¨!\r");
 
     return Temp;
 }
 
 
 
-// ¼ì²é×Ö¿âÑù±¾µÄÕıÈ·ĞÔ
+// æ£€æŸ¥å­—åº“æ ·æœ¬çš„æ­£ç¡®æ€§
 static void checkFlagGBKStorage(void)
 {
-    if (xW25Q128 .FlagInit == 0) return;                  // Èç¹ûW25Qxx³õÊ¼»¯Ê§°Ü£¬ÔòÌø¹ı¼ì²â£¬·ÀÖ¹¿¨ËÀ
+    if (xW25Q128 .FlagInit == 0) return;                  // å¦‚æœW25Qxxåˆå§‹åŒ–å¤±è´¥ï¼Œåˆ™è·³è¿‡æ£€æµ‹ï¼Œé˜²æ­¢å¡æ­»
 
-    printf("GBK×Ö¿â ²âÊÔ...          ");
+    printf("GBKå­—åº“ æµ‹è¯•...          ");
     uint8_t sub = 0;
     uint8_t f = 0 ;
 
@@ -196,25 +196,25 @@ static void checkFlagGBKStorage(void)
         W25Q128_ReadData(GBK_STORAGE_ADDR + i, &f, 1);
         sub = sub + f;                                    // 80 , 0, 98, 79, 0, 1, 0
     }
-    xW25Q128.FlagGBKStorage = (sub == 146 ? 1 : 0);       // ÅĞ¶ÏÊÇ·ñÓĞ×Ö¿â,´ò¿ªµØÖ·Ğ´±£»¤, ·ÀÖ¹×Ö¿â±»´íÎóĞ´ÈëÂÄ¸Ç
+    xW25Q128.FlagGBKStorage = (sub == 146 ? 1 : 0);       // åˆ¤æ–­æ˜¯å¦æœ‰å­—åº“,æ‰“å¼€åœ°å€å†™ä¿æŠ¤, é˜²æ­¢å­—åº“è¢«é”™è¯¯å†™å…¥å±¥ç›–
 
     if (xW25Q128.FlagGBKStorage == 1)
-        printf("×Ö¿â¿ÉÓÃ\r");                             // ±ê¼Ç×Ö¿â¿ÉÓÃ
+        printf("å­—åº“å¯ç”¨\r");                             // æ ‡è®°å­—åº“å¯ç”¨
     else
-        printf(" ´íÎó£¬×Ö¿â²»¿ÉÓÃ!\r");
+        printf(" é”™è¯¯ï¼Œå­—åº“ä¸å¯ç”¨!\r");
 }
 
 
 
 /******************************************************************************
- * º¯  Êı£º W25qx_Init
- * ¹¦  ÄÜ£º ³õÊ¼»¯W25Q128ËùĞèÒı½Å¡¢SPI
- * ²Î  Êı£º
- * ·µ»ØÖµ£º ³õÊ¼»¯½á¹û£¬0:Ê§°Ü¡¢1:³É¹¦
+ * å‡½  æ•°ï¼š W25qx_Init
+ * åŠŸ  èƒ½ï¼š åˆå§‹åŒ–W25Q128æ‰€éœ€å¼•è„šã€SPI
+ * å‚  æ•°ï¼š
+ * è¿”å›å€¼ï¼š åˆå§‹åŒ–ç»“æœï¼Œ0:å¤±è´¥ã€1:æˆåŠŸ
  ******************************************************************************/
 uint8_t W25Q128_Init(void)
 {  
-    // CSÒı½ÅÊ±ÖÓ Ê¹ÄÜ
+    // CSå¼•è„šæ—¶é’Ÿ ä½¿èƒ½
     if (W25Q128_CS_GPIO == GPIOA) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     if (W25Q128_CS_GPIO == GPIOB) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     if (W25Q128_CS_GPIO == GPIOC) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
@@ -222,7 +222,7 @@ uint8_t W25Q128_Init(void)
     if (W25Q128_CS_GPIO == GPIOE) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
     if (W25Q128_CS_GPIO == GPIOF) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN;
     if (W25Q128_CS_GPIO == GPIOG) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN;
-    // SPIÒı½ÅÊ±ÖÓ Ê¹ÄÜ
+    // SPIå¼•è„šæ—¶é’Ÿ ä½¿èƒ½
     if (W25Q128_SCK_GPIO == GPIOA) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     if (W25Q128_SCK_GPIO == GPIOB) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     if (W25Q128_SCK_GPIO == GPIOC) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
@@ -230,88 +230,88 @@ uint8_t W25Q128_Init(void)
     if (W25Q128_SCK_GPIO == GPIOE) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
     if (W25Q128_SCK_GPIO == GPIOF) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN;
     if (W25Q128_SCK_GPIO == GPIOG) RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN;
-    // SPIÊ±ÖÓ Ê¹ÄÜ
+    // SPIæ—¶é’Ÿ ä½¿èƒ½
     if (W25Q128_SPI == SPI1)  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
     if (W25Q128_SPI == SPI2)  RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
     if (W25Q128_SPI == SPI3)  RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
     
-#ifdef USE_HAL_DRIVER                                                // HAL¿â
-    // ÅäÖÃÒı½Å: CS                                                  
-    GPIO_InitTypeDef    GPIO_InitStruct = {0};                       // ÉùÃ÷³õÊ¼»¯ÒªÓÃµ½µÄ½á¹¹Ìå
-    GPIO_InitStruct.Pin   = W25Q128_CS_PIN;                          // Òı½Å
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;                     // ¹¤×÷Ä£Ê½
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;                             // ÉÏÏÂÀ­
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;               // Òı½ÅËÙÂÊ
-    HAL_GPIO_Init(W25Q128_CS_GPIO, &GPIO_InitStruct);                // ³õÊ¼»¯Òı½Å¹¤×÷Ä£Ê½
-    W25Q128_CS_HIGH;                                                 // CSÒı½ÅÀ­¸ß£ºÍ£Ö¹ĞÅºÅ
-    // ÅäÖÃ SPIÒı½Å: SCK¡¢MISO¡¢MOSI
+#ifdef USE_HAL_DRIVER                                                // HALåº“
+    // é…ç½®å¼•è„š: CS                                                  
+    GPIO_InitTypeDef    GPIO_InitStruct = {0};                       // å£°æ˜åˆå§‹åŒ–è¦ç”¨åˆ°çš„ç»“æ„ä½“
+    GPIO_InitStruct.Pin   = W25Q128_CS_PIN;                          // å¼•è„š
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;                     // å·¥ä½œæ¨¡å¼
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;                             // ä¸Šä¸‹æ‹‰
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;               // å¼•è„šé€Ÿç‡
+    HAL_GPIO_Init(W25Q128_CS_GPIO, &GPIO_InitStruct);                // åˆå§‹åŒ–å¼•è„šå·¥ä½œæ¨¡å¼
+    W25Q128_CS_HIGH;                                                 // CSå¼•è„šæ‹‰é«˜ï¼šåœæ­¢ä¿¡å·
+    // é…ç½® SPIå¼•è„š: SCKã€MISOã€MOSI
     GPIO_InitStruct.Pin   = W25Q128_SCK_PIN | W25Q128_MISO_PIN | W25Q128_MOSI_PIN;
-    GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;                         // ¹¤×÷Ä£Ê½
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;                             // ÉÏÏÂÀ­
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;               // Òı½ÅËÙÂÊ
-    GPIO_InitStruct.Alternate = W25Q128_SPI_AFx;                     // Òı½Å¸´ÓÃ¹¦ÄÜ
-    HAL_GPIO_Init(W25Q128_SCK_GPIO, &GPIO_InitStruct);               // ³õÊ¼»¯Òı½Å¹¤×÷Ä£Ê½
+    GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;                         // å·¥ä½œæ¨¡å¼
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;                             // ä¸Šä¸‹æ‹‰
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;               // å¼•è„šé€Ÿç‡
+    GPIO_InitStruct.Alternate = W25Q128_SPI_AFx;                     // å¼•è„šå¤ç”¨åŠŸèƒ½
+    HAL_GPIO_Init(W25Q128_SCK_GPIO, &GPIO_InitStruct);               // åˆå§‹åŒ–å¼•è„šå·¥ä½œæ¨¡å¼
 #endif                                                               
                                                                      
-#ifdef USE_STDPERIPH_DRIVER                                          // ±ê×¼¿â
-    // ÅäÖÃÒı½Å: CS                                                  
-    GPIO_InitTypeDef    GPIO_InitStruct = {0};                       // ÉùÃ÷³õÊ¼»¯ÒªÓÃµ½µÄ½á¹¹Ìå
+#ifdef USE_STDPERIPH_DRIVER                                          // æ ‡å‡†åº“
+    // é…ç½®å¼•è„š: CS                                                  
+    GPIO_InitTypeDef    GPIO_InitStruct = {0};                       // å£°æ˜åˆå§‹åŒ–è¦ç”¨åˆ°çš„ç»“æ„ä½“
     GPIO_InitStruct.GPIO_Pin = W25Q128_CS_PIN;
     GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;
     GPIO_Init(W25Q128_CS_GPIO, &GPIO_InitStruct);
-    W25Q128_CS_HIGH;                                                 // CSÒı½ÅÀ­¸ß£ºÍ£Ö¹ĞÅºÅ 
-    // ÅäÖÃ SPIÒı½Å: SCK¡¢MISO¡¢MOSI
+    W25Q128_CS_HIGH;                                                 // CSå¼•è„šæ‹‰é«˜ï¼šåœæ­¢ä¿¡å· 
+    // é…ç½® SPIå¼•è„š: SCKã€MISOã€MOSI
     GPIO_InitStruct.GPIO_Pin = W25Q128_SCK_PIN | W25Q128_MISO_PIN | W25Q128_MOSI_PIN;
     GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
     GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_Init(W25Q128_SCK_GPIO, &GPIO_InitStruct);
-    //ÉèÖÃÒı½Å¸´ÓÃ
+    //è®¾ç½®å¼•è„šå¤ç”¨
     GPIO_PinAFConfig(W25Q128_SCK_GPIO,  W25Q128_SCK_PINSOURCE,  W25Q128_SCK_AF);
     GPIO_PinAFConfig(W25Q128_MISO_GPIO, W25Q128_MISO_PINSOURCE, W25Q128_MISO_AF);
     GPIO_PinAFConfig(W25Q128_MOSI_GPIO, W25Q128_MOSI_PINSOURCE, W25Q128_MOSI_AF);
 #endif
     
-    // ÅäÖÃSPI¹¤×÷Ä£Ê½
-    W25Q128_SPI -> CR1  = 0x1 << 0;                           // CPHA:Ê±ÖÓÏàÎ»,0x1=ÔÚµÚ2¸öÊ±ÖÓ±ßÑØ½øĞĞÊı¾İ²ÉÑù
-    W25Q128_SPI -> CR1 |= 0x1 << 1;                           // CPOL:Ê±ÖÓ¼«ĞÔ,0x1=¿ÕÏĞ×´Ì¬Ê±£¬SCK±£³Ö¸ßµçÆ½
-    W25Q128_SPI -> CR1 |= 0x1 << 2;                           // Ö÷´ÓÄ£Ê½:         1 = Ö÷ÅäÖÃ
-    W25Q128_SPI -> CR1 |= 0x0 << 3;                           // ²¨ÌØÂÊ¿ØÖÆ[5:3]:  0 = fPCLK /2
-    W25Q128_SPI -> CR1 |= 0x0 << 7;                           // Ö¡¸ñÊ½:           0 = ÏÈ·¢ËÍMSB
-    W25Q128_SPI -> CR1 |= 0x1 << 9;                           // Èí¼ş´ÓÆ÷¼ş¹ÜÀí :  1 = Ê¹ÄÜÈí¼ş´ÓÆ÷¼ş¹ÜÀí(Èí¼şNSS)
-    W25Q128_SPI -> CR1 |= 0x1 << 8;                           // ÄÚ²¿´ÓÆ÷¼şÑ¡Ôñ,¸ù¾İ9Î»ÉèÖÃ(Ê§ÄÜÄÚ²¿NSS)
-    W25Q128_SPI -> CR1 |= 0x0 << 11;                          // Êı¾İÖ¡¸ñÊ½,       0 = 8Î»
-    W25Q128_SPI -> CR1 |= 0x1 << 6;                           // SPIÊ¹ÄÜ           1 = Ê¹ÄÜÍâÉè
+    // é…ç½®SPIå·¥ä½œæ¨¡å¼
+    W25Q128_SPI -> CR1  = 0x1 << 0;                           // CPHA:æ—¶é’Ÿç›¸ä½,0x1=åœ¨ç¬¬2ä¸ªæ—¶é’Ÿè¾¹æ²¿è¿›è¡Œæ•°æ®é‡‡æ ·
+    W25Q128_SPI -> CR1 |= 0x1 << 1;                           // CPOL:æ—¶é’Ÿææ€§,0x1=ç©ºé—²çŠ¶æ€æ—¶ï¼ŒSCKä¿æŒé«˜ç”µå¹³
+    W25Q128_SPI -> CR1 |= 0x1 << 2;                           // ä¸»ä»æ¨¡å¼:         1 = ä¸»é…ç½®
+    W25Q128_SPI -> CR1 |= 0x0 << 3;                           // æ³¢ç‰¹ç‡æ§åˆ¶[5:3]:  0 = fPCLK /2
+    W25Q128_SPI -> CR1 |= 0x0 << 7;                           // å¸§æ ¼å¼:           0 = å…ˆå‘é€MSB
+    W25Q128_SPI -> CR1 |= 0x1 << 9;                           // è½¯ä»¶ä»å™¨ä»¶ç®¡ç† :  1 = ä½¿èƒ½è½¯ä»¶ä»å™¨ä»¶ç®¡ç†(è½¯ä»¶NSS)
+    W25Q128_SPI -> CR1 |= 0x1 << 8;                           // å†…éƒ¨ä»å™¨ä»¶é€‰æ‹©,æ ¹æ®9ä½è®¾ç½®(å¤±èƒ½å†…éƒ¨NSS)
+    W25Q128_SPI -> CR1 |= 0x0 << 11;                          // æ•°æ®å¸§æ ¼å¼,       0 = 8ä½
+    W25Q128_SPI -> CR1 |= 0x1 << 6;                           // SPIä½¿èƒ½           1 = ä½¿èƒ½å¤–è®¾
 
-    readID();                                                 // ¶ÁÈ¡Ğ¾Æ¬ĞÍºÅ,ÅĞ¶ÏÍ¨Ñ¶ÊÇ·ñÕı³£
-    checkFlagGBKStorage();                                    // ¼ì²é×Ö¿â
+    readID();                                                 // è¯»å–èŠ¯ç‰‡å‹å·,åˆ¤æ–­é€šè®¯æ˜¯å¦æ­£å¸¸
+    checkFlagGBKStorage();                                    // æ£€æŸ¥å­—åº“
 
     if (xW25Q128.FlagInit)
-        return 1;                                             // ³õÊ¼»¯³É¹¦£¬·µ»Ø:1
+        return 1;                                             // åˆå§‹åŒ–æˆåŠŸï¼Œè¿”å›:1
 
-    return 0;                                                 // ³õÊ¼»¯Ê§°Ü£¬·µ»Ø:0
+    return 0;                                                 // åˆå§‹åŒ–å¤±è´¥ï¼Œè¿”å›:0
 }
 
 
 
 /******************************************************************************
- * º¯  Êı£º W25Q128_ReadData
- * ¹¦  ÄÜ£º ¶ÁÈ¡Êı¾İ
- * ²Î  Êı£º uint32_t addr  Êı¾İÔÚW25Q128ÄÚµÄµØÖ·
- *          uint8_t *pData Êı¾İ»º´æµØÖ·
- *          uint16_t num   Á¬Ğø¶ÁÈ¡µÄ×Ö½ÚÊı
- * ·µ»ØÖµ£º ÎŞ
+ * å‡½  æ•°ï¼š W25Q128_ReadData
+ * åŠŸ  èƒ½ï¼š è¯»å–æ•°æ®
+ * å‚  æ•°ï¼š uint32_t addr  æ•°æ®åœ¨W25Q128å†…çš„åœ°å€
+ *          uint8_t *pData æ•°æ®ç¼“å­˜åœ°å€
+ *          uint16_t num   è¿ç»­è¯»å–çš„å­—èŠ‚æ•°
+ * è¿”å›å€¼ï¼š æ— 
  ******************************************************************************/
 void W25Q128_ReadData(uint32_t addr, uint8_t *pData, uint16_t num)
 {
-    if (xW25Q128 .FlagInit == 0) return;  // Èç¹ûW25Qxx³õÊ¼»¯Ê§°Ü£¬ÔòÌø¹ı¼ì²â£¬·ÀÖ¹¿¨ËÀ
+    if (xW25Q128 .FlagInit == 0) return;  // å¦‚æœW25Qxxåˆå§‹åŒ–å¤±è´¥ï¼Œåˆ™è·³è¿‡æ£€æµ‹ï¼Œé˜²æ­¢å¡æ­»
 
     W25Q128_CS_LOW ;
-    sendByte(0x03);                       // ·¢ËÍ¶ÁÈ¡ÃüÁî 03h
+    sendByte(0x03);                       // å‘é€è¯»å–å‘½ä»¤ 03h
     sendByte((uint8_t)(addr >> 16));
     sendByte((uint8_t)(addr >> 8));
     sendByte((uint8_t)addr);
@@ -327,53 +327,53 @@ void W25Q128_ReadData(uint32_t addr, uint8_t *pData, uint16_t num)
 
 
 /******************************************************************************
- * º¯ÊıÃû£º W25Q128_WriteData
- * ¹¦  ÄÜ£º ´Óaddr´¦Æğ£¬¶ÁÈ¡num¸ö×Ö½Ú£¬´æ·Åµ½»º´æp
- * ²Î  Êı£º uint32_t  addr   Ğ´ÈëµØÖ·         (W25Q128 Ö»ÓÃ3×Ö½Ú, W25Q256ÓÃ4×Ö½Ú)
- *          uint8_t  *pData  ÒªĞ´ÈëµÄÊı¾İ´æ´¢Çø
- *          uint16_t  num    Ğ´ÈëµÄ×Ö½ÚÊı
- * ·µ  »Ø£º ÎŞ
- * ±¸  ×¢£º ×îºó¸üĞÂ_2020Äê12ÔÂ15ÈÕ
+ * å‡½æ•°åï¼š W25Q128_WriteData
+ * åŠŸ  èƒ½ï¼š ä»addrå¤„èµ·ï¼Œè¯»å–numä¸ªå­—èŠ‚ï¼Œå­˜æ”¾åˆ°ç¼“å­˜p
+ * å‚  æ•°ï¼š uint32_t  addr   å†™å…¥åœ°å€         (W25Q128 åªç”¨3å­—èŠ‚, W25Q256ç”¨4å­—èŠ‚)
+ *          uint8_t  *pData  è¦å†™å…¥çš„æ•°æ®å­˜å‚¨åŒº
+ *          uint16_t  num    å†™å…¥çš„å­—èŠ‚æ•°
+ * è¿”  å›ï¼š æ— 
+ * å¤‡  æ³¨ï¼š æœ€åæ›´æ–°_2020å¹´12æœˆ15æ—¥
  ******************************************************************************/
-uint8_t W25Q128_buffer[4096];                         // ¿ª±ÙÒ»¶ÎÄÚ´æ¿Õ¼ä
+uint8_t W25Q128_buffer[4096];                         // å¼€è¾Ÿä¸€æ®µå†…å­˜ç©ºé—´
 
 void W25Q128_WriteData(uint32_t addr, uint8_t *pData, uint16_t num)
 {
-    if (xW25Q128.FlagInit == 0) return ;              // Èç¹ûw25qxxÉè±¸³õÊ¼»¯Ê§°Ü£¬ÔòÌø¹ı±¾º¯Êı£¬·ÀÖ¹¿¨ËÀ
+    if (xW25Q128.FlagInit == 0) return ;              // å¦‚æœw25qxxè®¾å¤‡åˆå§‹åŒ–å¤±è´¥ï¼Œåˆ™è·³è¿‡æœ¬å‡½æ•°ï¼Œé˜²æ­¢å¡æ­»
 
-    // ×Ö¿â¶ÎĞ´±£»¤, ·ÀÖ¹×Ö¿â±»´íÎóĞ´ÈëÂÄ¸Ç
+    // å­—åº“æ®µå†™ä¿æŠ¤, é˜²æ­¢å­—åº“è¢«é”™è¯¯å†™å…¥å±¥ç›–
     if (((addr + num) > 0x00A00000) && (xW25Q128.FlagGBKStorage == 1))
     {
-        printf("ÒªĞ´ÈëµÄÊı¾İÔÚ×Ö¿âÊı¾İ´æ´¢ÇøÄÚ£¬ÒÑÌø¹ı±¾´Î²Ù×÷!!\r");
+        printf("è¦å†™å…¥çš„æ•°æ®åœ¨å­—åº“æ•°æ®å­˜å‚¨åŒºå†…ï¼Œå·²è·³è¿‡æœ¬æ¬¡æ“ä½œ!!\r");
         return;
     }
 
-    uint32_t  secPos      = addr / 4096;              // ÉÈÇøµØÖ·,µÚ¼¸¸öÉÈÇø
-    uint16_t  secOff      = addr % 4096;              // ¿ªÊ¼µØÊ¼Æ«ÒÆ×Ö½ÚÊı: Êı¾İÔÚÉÈÇøµÄµÚ¼¸×Ö½Ú´æ·Å
-    uint16_t  secRemain   = 4096 - secOff;            // ÉÈÇøÊ£Óà¿Õ¼ä×Ö½ÚÊı ,ÓÃÓÚÅĞ¶Ï¹»²»¹»´æ·ÅÓàÏÂµÄÊı¾İ
-    uint8_t  *buf = W25Q128_buffer;                   // Ô­×Ó¸ç´úÂë,ÎªÊ²Ã´²»Ö±½ÓÊ¹ÓÃËùÉùÃ÷µÄÊı×é.
+    uint32_t  secPos      = addr / 4096;              // æ‰‡åŒºåœ°å€,ç¬¬å‡ ä¸ªæ‰‡åŒº
+    uint16_t  secOff      = addr % 4096;              // å¼€å§‹åœ°å§‹åç§»å­—èŠ‚æ•°: æ•°æ®åœ¨æ‰‡åŒºçš„ç¬¬å‡ å­—èŠ‚å­˜æ”¾
+    uint16_t  secRemain   = 4096 - secOff;            // æ‰‡åŒºå‰©ä½™ç©ºé—´å­—èŠ‚æ•° ,ç”¨äºåˆ¤æ–­å¤Ÿä¸å¤Ÿå­˜æ”¾ä½™ä¸‹çš„æ•°æ®
+    uint8_t  *buf = W25Q128_buffer;                   // åŸå­å“¥ä»£ç ,ä¸ºä»€ä¹ˆä¸ç›´æ¥ä½¿ç”¨æ‰€å£°æ˜çš„æ•°ç»„.
 
-    //spiInit();                                      // Ã¿´Î¶ÁĞ´Ç°£¬ÏÈÖØĞÂÅäÖÃSPI£¬±ÜÃâ¶à¸öÉè±¸¹²ÓÃÒ»SPIÊ±µÄÅäÖÃ²»Í¬
+    //spiInit();                                      // æ¯æ¬¡è¯»å†™å‰ï¼Œå…ˆé‡æ–°é…ç½®SPIï¼Œé¿å…å¤šä¸ªè®¾å¤‡å…±ç”¨ä¸€SPIæ—¶çš„é…ç½®ä¸åŒ
     if (num <= secRemain) secRemain = num;
     while (1)
     {
-        W25Q128_ReadData(secPos * 4096, buf, 4096);   // ¶ÁÈ¡ÉÈÇøÄÚÈİµ½»º´æ
+        W25Q128_ReadData(secPos * 4096, buf, 4096);   // è¯»å–æ‰‡åŒºå†…å®¹åˆ°ç¼“å­˜
 
-        eraseSector(secPos);                          // ²ÁÉÈÇø
-        for (uint16_t i = 0; i < secRemain ; i++)     // Ô­Ê¼Êı¾İĞ´Èë»º´æ
+        eraseSector(secPos);                          // æ“¦æ‰‡åŒº
+        for (uint16_t i = 0; i < secRemain ; i++)     // åŸå§‹æ•°æ®å†™å…¥ç¼“å­˜
             buf[secOff + i] = pData[i];
-        writeSector(secPos * 4096, buf, 4096);        // »º´æÊı¾İĞ´ÈëÉè±¸
+        writeSector(secPos * 4096, buf, 4096);        // ç¼“å­˜æ•°æ®å†™å…¥è®¾å¤‡
 
-        if (secRemain == num)                         // ÒÑÈ«²¿Ğ´Èë
+        if (secRemain == num)                         // å·²å…¨éƒ¨å†™å…¥
             break;
         else
         {
-            // Î´Ğ´Íê
-            pData = pData + secRemain ;               // Ô­Ê¼Êı¾İÖ¸ÕëÆ«ÒÆ
-            secPos ++;                                // ĞÂÉÈÇø
-            secOff = 0;                               // ĞÂÆ«ÒÆÎ»,ÉÈÇøÄÚÊı¾İÆğÊ¼µØÖ·
-            num = num - secRemain ;                   // Ê£ÓàÎ´Ğ´×Ö½ÚÊı
-            secRemain = (num > 4096) ? 4096 : num;    // ¼ÆËãĞÂÉÈÇøĞ´Èë×Ö½ÚÊı
+            // æœªå†™å®Œ
+            pData = pData + secRemain ;               // åŸå§‹æ•°æ®æŒ‡é’ˆåç§»
+            secPos ++;                                // æ–°æ‰‡åŒº
+            secOff = 0;                               // æ–°åç§»ä½,æ‰‡åŒºå†…æ•°æ®èµ·å§‹åœ°å€
+            num = num - secRemain ;                   // å‰©ä½™æœªå†™å­—èŠ‚æ•°
+            secRemain = (num > 4096) ? 4096 : num;    // è®¡ç®—æ–°æ‰‡åŒºå†™å…¥å­—èŠ‚æ•°
         }
     }
 }
@@ -381,49 +381,49 @@ void W25Q128_WriteData(uint32_t addr, uint8_t *pData, uint16_t num)
 
 
 /******************************************************************************
- * º¯ÊıÃû£º W25Q128_ReadFontData
- * ¹¦  ÄÜ£º ´Ów25Q128µÄ×Ö¿âÖĞ¶ÁÈ¡³öºº×Ö×ÖÄ£Êı¾İ
- * ²Î  Êı£º uint8_t *pFont     ºº×Ö
- *          uint8_t  size      ×ÖÌå´óĞ¡ 12/16/24/32
- *          uint8_t *fontData  ¶ÁÈ¡µ½µÄ×ÖÄ£µãÕóÊı¾İ
- * ·µ  »Ø£º ÎŞ
- * ±¸  ×¢£º ×îºó¸üĞÂ_2024Äê02ÔÂ05ÈÕ
+ * å‡½æ•°åï¼š W25Q128_ReadFontData
+ * åŠŸ  èƒ½ï¼š ä»w25Q128çš„å­—åº“ä¸­è¯»å–å‡ºæ±‰å­—å­—æ¨¡æ•°æ®
+ * å‚  æ•°ï¼š uint8_t *pFont     æ±‰å­—
+ *          uint8_t  size      å­—ä½“å¤§å° 12/16/24/32
+ *          uint8_t *fontData  è¯»å–åˆ°çš„å­—æ¨¡ç‚¹é˜µæ•°æ®
+ * è¿”  å›ï¼š æ— 
+ * å¤‡  æ³¨ï¼š æœ€åæ›´æ–°_2024å¹´02æœˆ05æ—¥
  ******************************************************************************/
 void W25Q128_ReadFontData(uint8_t *pFont, uint8_t size, uint8_t *fontData)
 {
     uint8_t qh, ql;
     uint32_t foffset;
-    uint8_t csize = (size / 8 + ((size % 8) ? 1 : 0)) * (size);                           // ¼ÆËãºº×ÖµãÕó´óĞ¡£¬µ¥Î»×Ö½ÚÊı
+    uint8_t csize = (size / 8 + ((size % 8) ? 1 : 0)) * (size);                           // è®¡ç®—æ±‰å­—ç‚¹é˜µå¤§å°ï¼Œå•ä½å­—èŠ‚æ•°
 
-    qh = *pFont;                                                                          // ºº×ÖGBKµÄµÚÒ»¸ö×Ö½Ú
-    ql = *(++pFont);                                                                      // ºº×ÖGBKµÄµÚ¶ş¸ö×Ö½Ú
+    qh = *pFont;                                                                          // æ±‰å­—GBKçš„ç¬¬ä¸€ä¸ªå­—èŠ‚
+    ql = *(++pFont);                                                                      // æ±‰å­—GBKçš„ç¬¬äºŒä¸ªå­—èŠ‚
 
-    if (qh < 0x81 || ql < 0x40 || ql == 0xff || qh == 0xff)                               // ²»ÔÚ×Ö¿âÄÚµÄºº×Ö£¬½«ÓÃÌî³äÏÔÊ¾Õû¸öÎ»ÖÃ
+    if (qh < 0x81 || ql < 0x40 || ql == 0xff || qh == 0xff)                               // ä¸åœ¨å­—åº“å†…çš„æ±‰å­—ï¼Œå°†ç”¨å¡«å……æ˜¾ç¤ºæ•´ä¸ªä½ç½®
     {
-        for (uint8_t i = 0; i < csize; i++) *fontData++ = 0x00;                           // Ìî³äÂú¸ñ
-        return;                                                                           // ·µ»Ø
+        for (uint8_t i = 0; i < csize; i++) *fontData++ = 0x00;                           // å¡«å……æ»¡æ ¼
+        return;                                                                           // è¿”å›
     }
 
-    if (ql < 0x7f)                                                                        // ¼ÆËãÒªÌáÈ¡µÄºº×ÖÔÚ×Ö¿âÖĞµÄÆ«ÒÆÎ»ÖÃ
+    if (ql < 0x7f)                                                                        // è®¡ç®—è¦æå–çš„æ±‰å­—åœ¨å­—åº“ä¸­çš„åç§»ä½ç½®
         ql -= 0x40;
     else
         ql -= 0x41;
     qh -= 0x81;
-    foffset = ((unsigned long)190 * qh + ql) * csize;                                     // µÃµ½ºº×ÖÔÚ×Ö¿âÖĞµÄÆ«ÒÆÎ»ÖÃ
+    foffset = ((unsigned long)190 * qh + ql) * csize;                                     // å¾—åˆ°æ±‰å­—åœ¨å­—åº“ä¸­çš„åç§»ä½ç½®
 
-    switch (size)                                                                         // °´×ÖÌåµÄ²»Í¬£¬ÔÚ²»Í¬×Ö¿â¶ÁÈ¡×ÖÌåµãÕó
+    switch (size)                                                                         // æŒ‰å­—ä½“çš„ä¸åŒï¼Œåœ¨ä¸åŒå­—åº“è¯»å–å­—ä½“ç‚¹é˜µ
     {
         case 12:
-            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x00000000, fontData, csize);     // 12ºÅ×ÖÌå
+            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x00000000, fontData, csize);     // 12å·å­—ä½“
             break;
         case 16:
-            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x0008c460, fontData, csize);   // 16ºÅ×ÖÌå
+            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x0008c460, fontData, csize);   // 16å·å­—ä½“
             break;
         case 24:
-            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x001474E0, fontData, csize);   // 24ºÅ×ÖÌå
+            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x001474E0, fontData, csize);   // 24å·å­—ä½“
             break;
         case 32:
-            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x002EC200, fontData, csize);   // 32ºÅ×ÖÌå
+            W25Q128_ReadData(foffset + GBK_STORAGE_ADDR + 0x002EC200, fontData, csize);   // 32å·å­—ä½“
             break;
     }
 }
