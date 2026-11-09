@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Bsp/W25Q128;../Bsp/LCD_ILI9341;../Bsp/XPT2046;../Bsp/UART</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Bsp/W25Q128;../Bsp/LCD_ILI9341;../Bsp/XPT2046;../Bsp/UART;../Bsp/motor</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -621,6 +621,16 @@
         <Group>
           <GroupName>BSP</GroupName>
           <Files>
+            <File>
+              <FileName>bsp_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Bsp\motor\bsp_motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Bsp\motor\bsp_motor.h</FilePath>
+            </File>
             <File>
               <FileName>bsp_W25Q128.c</FileName>
               <FileType>1</FileType>
