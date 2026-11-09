@@ -1,4 +1,4 @@
-﻿/* USER CODE BEGIN Header */
+﻿﻿/* USER CODE BEGIN Header */
 /***********************************************************************************************************************************
  ** 【代码编写】  魔女开发板团队
  ** 【淘    宝】  魔女开发板 1      https://demoboard.taobao.com
@@ -48,11 +48,11 @@
 /* USER CODE BEGIN PD */
 
 /* ================= 主轴电机：TSDA-C11A 脉冲/方向控制 =================
- * 接线：CN3 的 PUL+ / DIR+ / ENA+ 接 +5V，PUL- / DIR- / ENA- 各接一路
- *       经 3.3V→5V 电平转换后的 GPIO（共阳极接法）。
- *       - PUL- 低电平期间光耦导通，每个低脉冲计一步（TIM4_CH1 硬件 PWM）
- *       - DIR+ 与 DIR- 之间为低电平时正转，高电平时反转 → DIR- 输出高 = 正转
- *       - ENA+ 与 ENA- 之间为低电平时使能，高电平时切断电机电源
+ * 接线：CN3 的 PUL- / DIR- / ENA- 共地，PUL+ / DIR+ / ENA+ 分别接
+ *       PD12 / PB1 / PD3（共阴极接法，有效电平见下）。
+ *       - PUL+ 低电平脉冲有效，空闲保持高电平（TIM4_CH1 硬件 PWM）
+ *       - DIR+ 输出高 = 正转，低 = 反转
+ *       - ENA+ 输出高 = 使能，低 = 失能
  * 若实测方向或使能相反，把对应的 LEVEL 宏改成相反电平即可。
  * 按键：KEY_1(PA0) 正转、KEY_2(PA1) 反转，两键都不按（或同时按下）停止。
  * 速度：10kHz ÷ 10000 脉冲/圈 = 1 圈/秒 = 60RPM（电子齿轮 1:1 时）
@@ -60,20 +60,20 @@
 #define MOTOR_PULSE_HZ           10000UL
 #define MOTOR_TIM_CLK_HZ         84000000UL                   // TIM4 挂 APB1，定时器时钟 = 42MHz × 2
 #define MOTOR_TIM_PERIOD         (MOTOR_TIM_CLK_HZ / MOTOR_PULSE_HZ - 1U)
-#define MOTOR_CCR_IDLE           (MOTOR_TIM_PERIOD + 1U)      // CCR > ARR：PWM 恒高，光耦关闭
-#define MOTOR_CCR_RUN            ((MOTOR_TIM_PERIOD + 1U) / 2U) // 50% 占空比
+#define MOTOR_CCR_IDLE           (MOTOR_TIM_PERIOD + 1U)      // CCR > ARR：PWM 恒高（空闲）
+#define MOTOR_CCR_RUN            ((MOTOR_TIM_PERIOD + 1U) * 7U / 10U) // 70% 占空比（高电平 70µs、低电平 30µs）
 
 #define MOTOR_PUL_GPIO_Port      GPIOD
 #define MOTOR_PUL_Pin            GPIO_PIN_12                  // TIM4_CH1，AF2
 #define MOTOR_DIR_GPIO_Port      GPIOB
 #define MOTOR_DIR_Pin            GPIO_PIN_1
-#define MOTOR_ENA_GPIO_Port      GPIOB
-#define MOTOR_ENA_Pin            GPIO_PIN_5
+#define MOTOR_ENA_GPIO_Port      GPIOD
+#define MOTOR_ENA_Pin            GPIO_PIN_3
 
-#define MOTOR_DIR_FORWARD_LEVEL  GPIO_PIN_SET                  // DIR- 高电平 = 差分低电平 = 正转(CCW)
-#define MOTOR_DIR_REVERSE_LEVEL  GPIO_PIN_RESET                // DIR- 低电平 = 差分高电平 = 反转(CW)
-#define MOTOR_ENA_ENABLE_LEVEL   GPIO_PIN_SET                  // ENA- 高电平 = 差分低电平 = 使能
-#define MOTOR_ENA_DISABLE_LEVEL  GPIO_PIN_RESET                // ENA- 低电平 = 差分高电平 = 失能(自由)
+#define MOTOR_DIR_FORWARD_LEVEL  GPIO_PIN_SET                  // DIR+ 高电平 = 正转(CCW)
+#define MOTOR_DIR_REVERSE_LEVEL  GPIO_PIN_RESET                // DIR+ 低电平 = 反转(CW)
+#define MOTOR_ENA_ENABLE_LEVEL   GPIO_PIN_SET                  // ENA+ 高电平 = 使能
+#define MOTOR_ENA_DISABLE_LEVEL  GPIO_PIN_RESET                // ENA+ 低电平 = 失能(自由)
 
 /* USER CODE END PD */
 
@@ -271,14 +271,18 @@ static void Motor_Init(void)
     __HAL_RCC_GPIOD_CLK_ENABLE();
     __HAL_RCC_TIM4_CLK_ENABLE();
 
-    // 方向/使能：推挽输出，初始为正转 + 失能
+    // DIR：PB1 推挽输出，初始正转
     HAL_GPIO_WritePin(MOTOR_DIR_GPIO_Port, MOTOR_DIR_Pin, MOTOR_DIR_FORWARD_LEVEL);
-    HAL_GPIO_WritePin(MOTOR_ENA_GPIO_Port, MOTOR_ENA_Pin, MOTOR_ENA_DISABLE_LEVEL);
-    gpio.Pin   = MOTOR_DIR_Pin | MOTOR_ENA_Pin;
+    gpio.Pin   = MOTOR_DIR_Pin;
     gpio.Mode  = GPIO_MODE_OUTPUT_PP;
     gpio.Pull  = GPIO_NOPULL;
     gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOB, &gpio);
+    HAL_GPIO_Init(MOTOR_DIR_GPIO_Port, &gpio);
+
+    // ENA：PD3 推挽输出，初始失能
+    HAL_GPIO_WritePin(MOTOR_ENA_GPIO_Port, MOTOR_ENA_Pin, MOTOR_ENA_DISABLE_LEVEL);
+    gpio.Pin   = MOTOR_ENA_Pin;
+    HAL_GPIO_Init(MOTOR_ENA_GPIO_Port, &gpio);
 
     // PUL：PD12 复用为 TIM4_CH1
     gpio.Pin       = MOTOR_PUL_Pin;
@@ -288,7 +292,7 @@ static void Motor_Init(void)
     gpio.Alternate = GPIO_AF2_TIM4;
     HAL_GPIO_Init(MOTOR_PUL_GPIO_Port, &gpio);
 
-    // TIM4 通道1：PWM 模式1，空闲时输出恒高（PUL- 高电平 = 光耦关闭）
+    // TIM4 通道1：PWM 模式1，空闲时输出恒高（PUL+ 高电平）
     TIM4->CR1   = 0;
     TIM4->PSC   = 0;
     TIM4->ARR   = MOTOR_TIM_PERIOD;
@@ -318,6 +322,7 @@ static void Motor_SetRun(int8_t dir)                 // dir: 1-正转, -1-反转
     HAL_Delay(2);                                                  // 等当前 PWM 周期走完
     HAL_GPIO_WritePin(MOTOR_DIR_GPIO_Port, MOTOR_DIR_Pin,
                       dir > 0 ? MOTOR_DIR_FORWARD_LEVEL : MOTOR_DIR_REVERSE_LEVEL);
+    HAL_Delay(1);                                                  // 方向建立时间（手册要求 ≥5µs）
 
     if (lastDir == 0)                                              // 从停止状态启动，需要先使能
     {
@@ -404,7 +409,7 @@ int main(void)
         /* 所有用户代码，必须写在配对的BEGIN与END注释行之间，否则重新生成时会被删除 */
 
         /** 1ms延时 **/
-        HAL_Delay(1 - 1);                                                  // 延时函数，参数：ms; 注意：CubeMX生成的HAL_Delay(), 函数内部为避免无效操作，会对传入参数+1，因此，如果只需要几ms延时建议传入参数时-1，如果需要大几百ms的非精准延时，那参数不-1也影响不大
+        HAL_Delay(1);                                                      // 1ms节拍；下方按键消抖、IMU超时和刷新周期均以此为基准
 
         /** 触摸检查 **/
         //XPT2046_TouchHandler();                                            // 触摸屏状态检测：1:检测是否有按下，2:如果有按下，就处理好按下的坐标

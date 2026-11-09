@@ -159,7 +159,7 @@ static uint8_t readAdcXY()
     cnt = 0;
     xSum = 0;
     ySum = 0;
-    memset(xyArray, 0, 20);
+    memset(xyArray, 0, sizeof(xyArray));
     xMin = 0;
     xMax = 0;
     yMin = 0;
@@ -171,6 +171,10 @@ static uint8_t readAdcXY()
         xyArray[1] [cnt] = readADC_Y();
         cnt ++;
     }
+
+    // 算法会剔除一个最大值和一个最小值并平均剩余两次采样；不足4次时结果无效。
+    if (cnt != 4)
+        return 0;
 
     // 开始求平均值
     xMax = xMin = xyArray [0] [0];                              // 筛选等会要去掉的最小值、最大值
@@ -537,12 +541,12 @@ uint8_t XPT2046_IsPressed(void)
     status = IRQ_READ ? 0 : 1 ;       // 引脚闲时为高电平，按下时为低电平
     if (status == 1)                  // 如果已按下
     {
-        readAdcXY();                  // 获取XPT2046的按下位置(电压值)
+        if (!readAdcXY()) return 0;   // 采样期间触摸释放或样本不足
         adcXYToLcdXY();               // 换算成显示屏的坐标值; 换算后的XY值，可通过：XPT2046_GetX()与XPT2046_GetY()获取;
         uint16_t x1 = xXPT2046.lcdX;
         uint16_t y1 = xXPT2046.lcdY;
 
-        readAdcXY();                  // 获取XPT2046的按下位置(电压值)
+        if (!readAdcXY()) return 0;   // 采样期间触摸释放或样本不足
         adcXYToLcdXY();               // 换算成显示屏的坐标值; 换算后的XY值，可通过：XPT2046_GetX()与XPT2046_GetY()获取;
         uint16_t x2 = xXPT2046.lcdX;
         uint16_t y2 = xXPT2046.lcdY;
